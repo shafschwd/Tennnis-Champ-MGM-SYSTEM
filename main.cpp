@@ -17,6 +17,11 @@ void displayMenu() {
 
 int main() {
     MatchHistory history;
+
+    // Load the existing match history
+    std::cout << "Loading existing match history..." << std::endl;
+    history.loadFromFile("match_history.txt");
+
     int choice;
     bool running = true;
 

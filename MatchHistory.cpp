@@ -105,8 +105,8 @@ bool MatchHistory::saveToFile(const std::string& filename) {
         return false;
     }
 
-    // Write header
-    outFile << "MatchID,Player1,Player2,Winner,Score" << std::endl;
+    // Write header with exact format from the sample file
+    outFile << "MatchID, Player1, Player2, Winner, Score" << std::endl;
 
     // Create temporary stack
     Stack<Match> tempStack;
@@ -115,11 +115,11 @@ bool MatchHistory::saveToFile(const std::string& filename) {
     while (!matchStack.isEmpty()) {
         Match currentMatch = matchStack.pop();
 
-        // Write match data to file
-        outFile << currentMatch.matchID << ","
-                << currentMatch.player1 << ","
-                << currentMatch.player2 << ","
-                << currentMatch.winner << ","
+        // Write match data to file with the exact format (notice spaces after commas)
+        outFile << currentMatch.matchID << ", "
+                << currentMatch.player1 << ", "
+                << currentMatch.player2 << ", "
+                << currentMatch.winner << ", "
                 << currentMatch.score << std::endl;
 
         tempStack.push(currentMatch);
@@ -135,6 +135,8 @@ bool MatchHistory::saveToFile(const std::string& filename) {
     return true;
 }
 
+
+// Load match history from file
 // Load match history from file
 bool MatchHistory::loadFromFile(const std::string& filename) {
     std::ifstream inFile(filename);
@@ -163,21 +165,21 @@ bool MatchHistory::loadFromFile(const std::string& filename) {
         std::getline(ss, token, ',');
         int matchID = std::stoi(token);
 
-        // Parse player1
+        // Parse player1 (trim leading space)
         std::getline(ss, token, ',');
-        std::string player1 = token;
+        std::string player1 = token.substr(token[0] == ' ' ? 1 : 0);
 
-        // Parse player2
+        // Parse player2 (trim leading space)
         std::getline(ss, token, ',');
-        std::string player2 = token;
+        std::string player2 = token.substr(token[0] == ' ' ? 1 : 0);
 
-        // Parse winner
+        // Parse winner (trim leading space)
         std::getline(ss, token, ',');
-        std::string winner = token;
+        std::string winner = token.substr(token[0] == ' ' ? 1 : 0);
 
-        // Parse score
+        // Parse score (trim leading space)
         std::getline(ss, token);
-        std::string score = token;
+        std::string score = token.substr(token[0] == ' ' ? 1 : 0);
 
         // Create match and add to stack
         Match match(matchID, player1, player2, winner, score);
