@@ -21,6 +21,9 @@ public:
     // Search for matches by player name
     void searchMatchesByPlayer(const std::string& playerName);
 
+    // Search for a match by ID
+    bool searchMatchByID(int matchID);
+
     // Save match history to file
     bool saveToFile(const std::string& filename);
 
