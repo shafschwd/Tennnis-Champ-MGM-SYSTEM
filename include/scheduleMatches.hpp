@@ -7,7 +7,7 @@
 #include <limits>
 #include <iomanip>
 #include <queue>
-#include "../include/MatchHistory.h"
+#include "MatchHistory.h"
 
 class Player {
 private:
@@ -40,7 +40,8 @@ public:
     void display() const;
 };
 
-class Match {
+// Renamed from Match to TournamentMatch
+class TournamentMatch {
 public:
     int id;
     Player* player1;
@@ -50,7 +51,7 @@ public:
     Player* winner;
     std::string status;
 
-    Match(int id, Player* p1, Player* p2, std::string round);
+    TournamentMatch(int id, Player* p1, Player* p2, std::string round);
 
     void setScore(std::string score);
     void setWinner(Player* winner);
@@ -61,23 +62,24 @@ public:
 class TournamentBracket {
 public:
     std::string roundType;
-    Match* matches[100];
+    TournamentMatch* matches[100]; // Changed from Match* to TournamentMatch*
     int matchCount;
 
     TournamentBracket(std::string type);
 
-    void addMatch(Match* match);
+    void addMatch(TournamentMatch* match); // Changed parameter type
     void display() const;
 };
 
-class MatchHistory {
+// Renamed from MatchHistory to TournamentMatchHistory
+class TournamentMatchHistory {
 public:
-    Match* completedMatches[100];
+    TournamentMatch* completedMatches[100]; // Changed from Match* to TournamentMatch*
     int completedCount;
 
-    MatchHistory();
+    TournamentMatchHistory();
 
-    void addCompletedMatch(Match* match);
+    void addCompletedMatch(TournamentMatch* match); // Changed parameter type
     void display() const;
 };
 
@@ -184,15 +186,18 @@ public:
     int getSize() const { return size; }
 };
 
-// Function declarations
+// Convert a TournamentMatch to Match for use with the Match History system
+Match convertToHistoricalMatch(const TournamentMatch* tournamentMatch);
+
+// Function declarations - all updated with new class names
 void clearScreen();
-void displayMainMenu();
-void handleStartMatchMenu(Match* matches[], int matchCount, TournamentBracket& bracket, int matchChoice, MatchHistory& history);
-void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInUsername, Match* matches[], int matchCount);
-void generateRoundRobinMatches(Player* players[], int playerCount, Match* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage);
-bool areAllMatchesCompleted(Match* matches[], int matchCount, const std::string& stage);
-int collectWinners(Match* matches[], int matchCount, const std::string& stage, Player* winners[], int maxWinners, WinnerPriorityQueue& pq);
-void generateKnockoutMatches(Player* winners[], int winnerCount, Match* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage);
-void runMainMenu(Match** matches, int matchCount, TournamentBracket& bracket, MatchHistory& history);
+void displayTournamentMenu();
+void handleStartMatchMenu(TournamentMatch* matches[], int matchCount, TournamentBracket& bracket, int matchChoice, TournamentMatchHistory& history);
+void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInUsername, TournamentMatch* matches[], int matchCount);
+void generateRoundRobinMatches(Player* players[], int playerCount, TournamentMatch* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage);
+bool areAllMatchesCompleted(TournamentMatch* matches[], int matchCount, const std::string& stage);
+int collectWinners(TournamentMatch* matches[], int matchCount, const std::string& stage, Player* winners[], int maxWinners, WinnerPriorityQueue& pq);
+void generateKnockoutMatches(Player* winners[], int winnerCount, TournamentMatch* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage);
+void runMainMenu(TournamentMatch** matches, int matchCount, TournamentBracket& bracket, TournamentMatchHistory& history);
 
 #endif // SCHEDULE_MATCHES_HPP

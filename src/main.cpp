@@ -3,10 +3,10 @@
 #include <string>
 #include <limits>
 
-#include "../include/MatchHistory.h"
-#include "../include/scheduleMatches.hpp"
-#include "../include/TicketManager.h"
-#include "../include/PlayerWithdrawalManager.h"
+#include "MatchHistory.h"
+#include "scheduleMatches.hpp"
+#include "TicketManager.h"
+#include "PlayerWithdrawalManager.h"
 
 void displayMainMenu() {
     std::cout << "\n========== ASIA PACIFIC UNIVERSITY TENNIS CHAMPIONSHIP MANAGEMENT SYSTEM ==========\n";
@@ -26,8 +26,10 @@ int main() {
 
     // For the tournament scheduling component
     TournamentBracket bracket("Round 1");
-    Match* scheduledMatches[100];
+    TournamentMatch* scheduledMatches[100]; // Changed from Match* to TournamentMatch*
     int matchCount = 0;
+
+    TournamentMatchHistory tournamentHistory; // Changed from MatchHistory to TournamentMatchHistory
 
     int choice;
     bool running = true;
@@ -45,7 +47,7 @@ int main() {
         switch (choice) {
             case 1:
                 // Tournament Scheduling
-                runMainMenu(scheduledMatches, matchCount, bracket, matchHistory);
+                runMainMenu(scheduledMatches, matchCount, bracket, tournamentHistory); // Updated to use tournamentHistory
                 break;
 
             case 2:
@@ -59,7 +61,7 @@ int main() {
                 break;
 
             case 4:
-                // Match History Tracking
+                // Match History
                 runMatchHistorySystem(matchHistory);
                 break;
 

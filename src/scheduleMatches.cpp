@@ -30,14 +30,14 @@ void Player::display() const {
               << ", Winning Percentage: " << std::fixed << std::setprecision(2) << getWinningPercentage() << "%\n";
 }
 
-// Match Implementation
-Match::Match(int id, Player* p1, Player* p2, std::string round)
+// TournamentMatch Implementation (previously Match)
+TournamentMatch::TournamentMatch(int id, Player* p1, Player* p2, std::string round)
     : id(id), player1(p1), player2(p2), round(round), score("NOT AVAILABLE"), winner(nullptr), status("UPCOMING") {}
 
-void Match::setScore(std::string score) { this->score = score; }
-void Match::setWinner(Player* winner) { this->winner = winner; }
+void TournamentMatch::setScore(std::string score) { this->score = score; }
+void TournamentMatch::setWinner(Player* winner) { this->winner = winner; }
 
-void Match::display() const {
+void TournamentMatch::display() const {
     std::cout << "Match ID: " << id << ", " << player1->getName() << " vs " << player2->getName()
               << ", Stage: " << round
               << ", Score: " << score << "\n";
@@ -48,7 +48,7 @@ TournamentBracket::TournamentBracket(std::string type) : roundType(type), matchC
     for (int i = 0; i < 100; i++) matches[i] = nullptr;
 }
 
-void TournamentBracket::addMatch(Match* match) {
+void TournamentBracket::addMatch(TournamentMatch* match) {
     if (matchCount < 100) matches[matchCount++] = match;
 }
 
@@ -57,16 +57,31 @@ void TournamentBracket::display() const {
     for (int i = 0; i < matchCount; i++) matches[i]->display();
 }
 
-// MatchHistory Implementation
-MatchHistory::MatchHistory() : completedCount(0) {}
+// TournamentMatchHistory Implementation (previously MatchHistory)
+TournamentMatchHistory::TournamentMatchHistory() : completedCount(0) {}
 
-void MatchHistory::addCompletedMatch(Match* match) {
+void TournamentMatchHistory::addCompletedMatch(TournamentMatch* match) {
     if (completedCount < 100) completedMatches[completedCount++] = match;
 }
 
-void MatchHistory::display() const {
+void TournamentMatchHistory::display() const {
     std::cout << "Match History:\n";
     for (int i = 0; i < completedCount; i++) completedMatches[i]->display();
+}
+
+// Convert a TournamentMatch to Match for historical records
+Match convertToHistoricalMatch(const TournamentMatch* tournamentMatch) {
+    std::string player1Name = tournamentMatch->player1->getName();
+    std::string player2Name = tournamentMatch->player2->getName();
+    std::string winnerName = tournamentMatch->winner ? tournamentMatch->winner->getName() : "";
+
+    return Match(
+        tournamentMatch->id,
+        player1Name,
+        player2Name,
+        winnerName,
+        tournamentMatch->score
+    );
 }
 
 // Clear screen
@@ -78,7 +93,7 @@ void clearScreen() {
 #endif
 }
 
-// Display main menu
+// Display tournament menu
 void displayTournamentMenu() {
     std::cout << " ========== Welcome to the APU Tennis Tournament Management System ==========\n";
     std::cout << "1. Tennis Player Account\n";
@@ -88,7 +103,7 @@ void displayTournamentMenu() {
 }
 
 // Handle start match menu
-void handleStartMatchMenu(Match* matches[], int matchCount, TournamentBracket& bracket, int matchChoice, MatchHistory& history) {
+void handleStartMatchMenu(TournamentMatch* matches[], int matchCount, TournamentBracket& bracket, int matchChoice, TournamentMatchHistory& history) {
     if (matchChoice < 1 || matchChoice > matchCount) {
         clearScreen();
         std::cout << "Invalid match selection.\n";
@@ -145,7 +160,7 @@ void handleStartMatchMenu(Match* matches[], int matchCount, TournamentBracket& b
 }
 
 // Handle player menu
-void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInUsername, Match* matches[], int matchCount) {
+void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInUsername, TournamentMatch* matches[], int matchCount) {
     clearScreen();
     std::string username, password;
     std::cout << "Enter username: ";
@@ -188,17 +203,17 @@ void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInU
 }
 
 // Generate round-robin matches
-void generateRoundRobinMatches(Player* players[], int playerCount, Match* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage) {
+void generateRoundRobinMatches(Player* players[], int playerCount, TournamentMatch* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage) {
     for (int i = 0; i < playerCount - 1; i++) {
         for (int j = i + 1; j < playerCount; j++) {
             if (matchCount >= maxMatches) return;
-            matches[matchCount++] = new Match(matchIDCounter++, players[i], players[j], stage);
+            matches[matchCount++] = new TournamentMatch(matchIDCounter++, players[i], players[j], stage);
         }
     }
 }
 
 // Check if all matches in a stage are completed
-bool areAllMatchesCompleted(Match* matches[], int matchCount, const std::string& stage) {
+bool areAllMatchesCompleted(TournamentMatch* matches[], int matchCount, const std::string& stage) {
     for (int i = 0; i < matchCount; i++) {
         if (matches[i]->round == stage && matches[i]->status != "Completed") {
             return false;
@@ -208,7 +223,7 @@ bool areAllMatchesCompleted(Match* matches[], int matchCount, const std::string&
 }
 
 // Collect winners from a stage
-int collectWinners(Match* matches[], int matchCount, const std::string& stage, Player* winners[], int maxWinners, WinnerPriorityQueue& pq) {
+int collectWinners(TournamentMatch* matches[], int matchCount, const std::string& stage, Player* winners[], int maxWinners, WinnerPriorityQueue& pq) {
     int winnerCount = 0;
 
     if (stage == "Qualifier") {
@@ -285,7 +300,7 @@ int collectWinners(Match* matches[], int matchCount, const std::string& stage, P
 }
 
 // Generate knockout matches
-void generateKnockoutMatches(Player* winners[], int winnerCount, Match* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage) {
+void generateKnockoutMatches(Player* winners[], int winnerCount, TournamentMatch* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage) {
     if (winnerCount < 2) {
         std::cout << "Not enough winners (" << winnerCount << ") to generate " << stage << " matches.\n";
         return;
@@ -294,7 +309,7 @@ void generateKnockoutMatches(Player* winners[], int winnerCount, Match* matches[
     // Pair winners for the next round
     for (int i = 0; i < winnerCount - 1; i += 2) {
         if (i + 1 < winnerCount && matchCount < maxMatches) {
-            matches[matchCount++] = new Match(matchIDCounter++, winners[i], winners[i + 1], stage);
+            matches[matchCount++] = new TournamentMatch(matchIDCounter++, winners[i], winners[i + 1], stage);
         }
     }
 
@@ -304,8 +319,8 @@ void generateKnockoutMatches(Player* winners[], int winnerCount, Match* matches[
     }
 }
 
-// Run main menu
-void runMainMenu(Match** matches, int matchCount, TournamentBracket& bracket, MatchHistory& history) {
+// Run main menu for tournament scheduling
+void runMainMenu(TournamentMatch** matches, int matchCount, TournamentBracket& bracket, TournamentMatchHistory& history) {
     Player* players[50];
     int playerCount = 6;
     players[0] = new Player(1, "Low", "p1", "s1", 1);
