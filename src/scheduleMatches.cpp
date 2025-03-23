@@ -1,4 +1,5 @@
-#include "scheduleMatches.hpp"
+// scheduleMatches.cpp - Implementation of tournament scheduling component
+#include "../include/scheduleMatches.hpp"
 
 // Player Implementation
 Player::Player(int id, std::string name, std::string username, std::string password, int rank)
@@ -78,11 +79,11 @@ void clearScreen() {
 }
 
 // Display main menu
-void displayMainMenu() {
+void displayTournamentMenu() {
     std::cout << " ========== Welcome to the APU Tennis Tournament Management System ==========\n";
     std::cout << "1. Tennis Player Account\n";
     std::cout << "2. Start Match\n";
-    std::cout << "0. Exit\n";
+    std::cout << "0. Return to Main Menu\n";
     std::cout << "Enter your choice: ";
 }
 
@@ -324,7 +325,7 @@ void runMainMenu(Match** matches, int matchCount, TournamentBracket& bracket, Ma
     int choice;
     do {
         clearScreen();
-        displayMainMenu();
+        displayTournamentMenu();
         std::cin >> choice;
 
         std::string loggedInUsername;
@@ -377,7 +378,7 @@ void runMainMenu(Match** matches, int matchCount, TournamentBracket& bracket, Ma
                 break;
             }
             case 0:
-                std::cout << "Exiting...\n";
+                std::cout << "Returning to main menu...\n";
                 break;
             default:
                 std::cout << "Invalid choice.\n";

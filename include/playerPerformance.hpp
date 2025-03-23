@@ -1,3 +1,4 @@
+// playerPerformance.hpp
 #ifndef PLAYER_PERFORMANCE_HPP
 #define PLAYER_PERFORMANCE_HPP
 
@@ -8,4 +9,4 @@ public:
     static void displayPerformance(Player* player);
 };
 
-#endif
+#endif // PLAYER_PERFORMANCE_HPP

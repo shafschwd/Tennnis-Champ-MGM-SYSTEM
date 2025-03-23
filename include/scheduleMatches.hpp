@@ -1,3 +1,4 @@
+// scheduleMatches.hpp
 #ifndef SCHEDULE_MATCHES_HPP
 #define SCHEDULE_MATCHES_HPP
 
@@ -6,6 +7,7 @@
 #include <limits>
 #include <iomanip>
 #include <queue>
+#include "../include/MatchHistory.h"
 
 class Player {
 private:
@@ -193,4 +195,4 @@ int collectWinners(Match* matches[], int matchCount, const std::string& stage, P
 void generateKnockoutMatches(Player* winners[], int winnerCount, Match* matches[], int& matchCount, int maxMatches, int& matchIDCounter, const std::string& stage);
 void runMainMenu(Match** matches, int matchCount, TournamentBracket& bracket, MatchHistory& history);
 
-#endif
+#endif // SCHEDULE_MATCHES_HPP

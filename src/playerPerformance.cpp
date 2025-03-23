@@ -1,4 +1,5 @@
-#include "playerPerformance.hpp"
+// playerPerformance.cpp
+#include "../include/playerPerformance.hpp"
 
 void PlayerPerformance::displayPerformance(Player* player) {
     std::cout << " ========== Player Performance ========== \n";

@@ -1,3 +1,4 @@
+// MatchHistory.h
 #ifndef MATCH_HISTORY_H
 #define MATCH_HISTORY_H
 
@@ -34,4 +35,7 @@ public:
     int getTotalMatches() const;
 };
 
-#endif
+// Standalone function to run match history system
+void runMatchHistorySystem(MatchHistory& history);
+
+#endif // MATCH_HISTORY_H

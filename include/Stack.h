@@ -178,4 +178,4 @@ void Stack<T>::clear() {
     }
 }
 
-#endif
+#endif // STACK_H
