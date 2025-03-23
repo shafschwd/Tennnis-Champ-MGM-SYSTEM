@@ -1,0 +1,6 @@
+TicketID, BuyerName, Type (VIP/Regular), Status
+T001, John Doe, VIP, Confirmed
+T002, Jane Smith, Regular, Pending
+T003, Alice Wong, VIP, Waiting
+T004, Bob Tan, Regular, Cancelled
+T005, Charlie Lim, Regular, Rejected
