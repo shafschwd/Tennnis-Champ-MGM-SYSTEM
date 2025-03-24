@@ -6,6 +6,26 @@
 #include <stdexcept>
 #include <limits>
 
+// Define a Player structure to store player information
+struct Player {
+    char playerID[10];
+    char name[100];
+    char status[100];
+    bool isActive;
+};
+
+// Define a PlayerList structure to store all players
+struct PlayerList {
+    static const int MAX_PLAYERS = 50;
+    Player players[MAX_PLAYERS];
+    int count;
+
+    PlayerList() : count(0) {}
+};
+
+// Global PlayerList to store player data
+PlayerList playerList;
+
 // Function to trim whitespace from beginning and end of a string
 std::string trim(const std::string& str) {
     size_t first = str.find_first_not_of(" \t\n\r");
@@ -27,6 +47,78 @@ bool isValidName(const std::string& name) {
         }
     }
     return true;
+}
+
+// Function to validate player ID (format: P followed by digits)
+bool isValidPlayerID(const std::string& id) {
+    if (id.empty() || id.length() < 2) return false;
+    
+    if (id[0] != 'P') return false;
+    
+    for (size_t i = 1; i < id.length(); i++) {
+        if (!std::isdigit(id[i])) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Function to load player data from file
+bool loadPlayerList(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Error: Could not open player list file: " << filename << std::endl;
+        return false;
+    }
+    
+    playerList.count = 0;
+    std::string line;
+    
+    // Skip header line
+    std::getline(file, line);
+    
+    while (std::getline(file, line) && playerList.count < PlayerList::MAX_PLAYERS) {
+        std::stringstream ss(line);
+        std::string id, name, status;
+        
+        if (!std::getline(ss, id, ',')) continue;
+        if (!std::getline(ss, name, ',')) continue;
+        if (!std::getline(ss, status)) continue;
+        
+        id = trim(id);
+        name = trim(name);
+        status = trim(status);
+        
+        // Store player data
+        strncpy(playerList.players[playerList.count].playerID, id.c_str(), sizeof(playerList.players[playerList.count].playerID) - 1);
+        playerList.players[playerList.count].playerID[sizeof(playerList.players[playerList.count].playerID) - 1] = '\0';
+        
+        strncpy(playerList.players[playerList.count].name, name.c_str(), sizeof(playerList.players[playerList.count].name) - 1);
+        playerList.players[playerList.count].name[sizeof(playerList.players[playerList.count].name) - 1] = '\0';
+        
+        strncpy(playerList.players[playerList.count].status, status.c_str(), sizeof(playerList.players[playerList.count].status) - 1);
+        playerList.players[playerList.count].status[sizeof(playerList.players[playerList.count].status) - 1] = '\0';
+        
+        // Check if player is active
+        playerList.players[playerList.count].isActive = (status == "Active");
+        
+        playerList.count++;
+    }
+    
+    file.close();
+    std::cout << "Loaded " << playerList.count << " players from player list." << std::endl;
+    return true;
+}
+
+// Function to find a player by ID
+Player* findPlayerByID(const std::string& id) {
+    for (int i = 0; i < playerList.count; i++) {
+        if (id == playerList.players[i].playerID) {
+            return &playerList.players[i];
+        }
+    }
+    return nullptr;
 }
 
 // Function to validate match ID (positive integer)
@@ -124,7 +216,8 @@ bool isValidFilename(const std::string& filename) {
 
 // Constructor
 MatchHistory::MatchHistory() {
-    // No additional initialization needed
+    // Load player list when MatchHistory is instantiated
+    loadPlayerList("/Users/markchwd/Desktop/DS/tennis-champ/data/player_list.txt");
 }
 
 // Add a new match to history
@@ -561,30 +654,68 @@ void runMatchHistorySystem(MatchHistory& history) {
                 // Get match ID with validation
                 int matchID = getIntInput("Enter Match ID: ", isValidMatchID);
 
-                // Get player names with validation
-                std::string player1 = getStringInput("Enter Player 1 Name: ", isValidName);
-                std::string player2 = getStringInput("Enter Player 2 Name: ", isValidName);
-
-                // Ensure player2 is not the same as player1
-                while (player2 == player1) {
-                    std::cout << "Error: Player 2 cannot be the same as Player 1." << std::endl;
-                    player2 = getStringInput("Enter Player 2 Name: ", isValidName);
-                }
-
-                // Get winner with validation (must be one of the players)
-                std::string winner;
+                // Get player1 ID with validation
+                std::string player1ID;
+                Player* player1Ptr = nullptr;
+                
                 do {
-                    winner = getStringInput("Enter Winner Name: ", isValidName);
-                    if (winner != player1 && winner != player2) {
-                        std::cout << "Error: Winner must be one of the players." << std::endl;
+                    player1ID = getStringInput("Enter Player 1 ID: ", isValidPlayerID);
+                    
+                    // Find player by ID
+                    player1Ptr = findPlayerByID(player1ID);
+                    
+                    if (player1Ptr == nullptr) {
+                        std::cout << "Error: Player ID not found. Please enter a valid Player ID." << std::endl;
+                    } else if (!player1Ptr->isActive) {
+                        std::cout << "Error: Player " << player1Ptr->name << " cannot participate. Status: " 
+                                  << player1Ptr->status << std::endl;
                     }
-                } while (winner != player1 && winner != player2);
+                } while (player1Ptr == nullptr || !player1Ptr->isActive);
+                
+                // Get player2 ID with validation
+                std::string player2ID;
+                Player* player2Ptr = nullptr;
+                
+                do {
+                    player2ID = getStringInput("Enter Player 2 ID: ", isValidPlayerID);
+                    
+                    // Check if same as player 1
+                    if (player2ID == player1ID) {
+                        std::cout << "Error: Player 2 cannot be the same as Player 1." << std::endl;
+                        continue;
+                    }
+                    
+                    // Find player by ID
+                    player2Ptr = findPlayerByID(player2ID);
+                    
+                    if (player2Ptr == nullptr) {
+                        std::cout << "Error: Player ID not found. Please enter a valid Player ID." << std::endl;
+                    } else if (!player2Ptr->isActive) {
+                        std::cout << "Error: Player " << player2Ptr->name << " cannot participate. Status: " 
+                                  << player2Ptr->status << std::endl;
+                    }
+                } while (player2Ptr == nullptr || !player2Ptr->isActive);
+                
+                // Get winner with validation (must be one of the players)
+                std::string winnerID;
+                Player* winnerPtr = nullptr;
+                
+                do {
+                    winnerID = getStringInput("Enter Winner ID: ", isValidPlayerID);
+                    
+                    if (winnerID != player1ID && winnerID != player2ID) {
+                        std::cout << "Error: Winner must be one of the players (either " 
+                                  << player1ID << " or " << player2ID << ")." << std::endl;
+                    } else {
+                        winnerPtr = (winnerID == player1ID) ? player1Ptr : player2Ptr;
+                    }
+                } while (winnerID != player1ID && winnerID != player2ID);
 
                 // Get score with validation
                 std::string score = getStringInput("Enter Score (e.g., 6-4 7-6): ", isValidScore);
 
-                // Create and add match
-                Match newMatch(matchID, player1, player2, winner, score);
+                // Create and add match with player names
+                Match newMatch(matchID, player1Ptr->name, player2Ptr->name, winnerPtr->name, score);
                 history.addMatch(newMatch);
                 break;
             }
