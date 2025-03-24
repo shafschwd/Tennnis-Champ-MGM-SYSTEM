@@ -4,7 +4,6 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <algorithm>
 #include <limits>
 
 // Function to trim whitespace from beginning and end of a string
@@ -22,9 +21,12 @@ bool isValidName(const std::string& name) {
     std::string trimmed = trim(name);
     if (trimmed.empty()) return false;
 
-    return std::all_of(trimmed.begin(), trimmed.end(), [](char c) {
-        return std::isalpha(c) || c == ' ' || c == '.' || c == '-';
-    });
+    for (char c : trimmed) {
+        if (!std::isalpha(c) && c != ' ' && c != '.' && c != '-') {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Function to validate match ID (positive integer)

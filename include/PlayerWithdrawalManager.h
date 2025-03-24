@@ -8,7 +8,6 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
-#include <algorithm>
 
 class TournamentSystem {
 private:

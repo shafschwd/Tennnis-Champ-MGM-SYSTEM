@@ -124,32 +124,30 @@ int TicketQueue::countTicketsSold() {
 }
 
 std::string generateTicketID() {
-    if (lastTicketNumber == 0) {
-        std::ifstream file("data/ticket_sales.txt");
-        std::string lastID = "T000";
-        std::string line, tempID;
+    std::ifstream file("data/ticket_sales.txt");
+    std::string lastID = "T000";
+    std::string line, tempID;
 
-        if (file) {
-            getline(file, line);
-            while (getline(file, line)) {
-                size_t pos = line.find(',');
-                if (pos != std::string::npos) {
-                    tempID = line.substr(0, pos);
+    if (file) {
+        getline(file, line); // Skip header
+        while (getline(file, line)) {
+            size_t pos = line.find(',');
+            if (pos != std::string::npos) {
+                tempID = line.substr(0, pos);
+                if (tempID > lastID) {
+                    lastID = tempID;
                 }
             }
-            if (!tempID.empty()) {
-                lastID = tempID;
-            }
-            file.close();
         }
+        file.close();
+    }
 
-        if (lastID.size() > 1 && lastID[0] == 'T') {
-            try {
-                lastTicketNumber = std::stoi(lastID.substr(1));
-            }
-            catch (...) {
-                lastTicketNumber = 0;
-            }
+    if (lastID.size() > 1 && lastID[0] == 'T') {
+        try {
+            lastTicketNumber = std::stoi(lastID.substr(1));
+        }
+        catch (...) {
+            lastTicketNumber = 0;
         }
     }
 
