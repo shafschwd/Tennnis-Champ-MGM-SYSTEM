@@ -1,3 +1,12 @@
 /TOURNAMENT SCHEDULING AND PLAYER PROGRESSION/cmake-build-debug/
 /TOURNAMENT SCHEDULING AND PLAYER PROGRESSION/CMakeLists.txt
 /cmake-build-debug/
+.DS_Store
+TCMS
+.idea/.name
+.idea/misc.xml
+.idea/vcs.xml
+data/.DS_Store
+data/schedule.txt
+include/.DS_Store
+src/.DS_Store
