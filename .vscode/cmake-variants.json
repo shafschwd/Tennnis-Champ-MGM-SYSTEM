@@ -1,0 +1,40 @@
+{
+  "buildType": {
+    "default": "debug",
+    "description": "Build type",
+    "choices": {
+      "debug": {
+        "short": "Debug",
+        "long": "Build with debug information",
+        "buildType": "Debug"
+      },
+      "release": {
+        "short": "Release",
+        "long": "Optimize for performance",
+        "buildType": "Release"
+      }
+    }
+  },
+  "platform": {
+    "default": "mac",
+    "description": "Platform to build for",
+    "choices": {
+      "mac": {
+        "short": "macOS",
+        "long": "Build for macOS",
+        "settings": {
+          "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+          "CMAKE_OSX_DEPLOYMENT_TARGET": "10.15"
+        }
+      },
+      "windows": {
+        "short": "Windows",
+        "long": "Build for Windows",
+        "settings": {
+          "CMAKE_SYSTEM_VERSION": "10.0",
+          "CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION": "10.0.19041.0"
+        }
+      }
+    }
+  }
+}
