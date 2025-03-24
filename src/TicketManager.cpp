@@ -76,12 +76,32 @@ void TicketQueue::saveToFile() {
         return;
     }
 
+    // Make a temporary copy of the tickets for sorting
+    Ticket tempTickets[100];
+    for (int i = 0; i < size; i++) {
+        tempTickets[i] = tickets[i];
+    }
+
+    // Sort the temporary tickets by ticketID using bubble sort
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (tempTickets[j].ticketID > tempTickets[j + 1].ticketID) {
+                // Swap tickets
+                Ticket temp = tempTickets[j];
+                tempTickets[j] = tempTickets[j + 1];
+                tempTickets[j + 1] = temp;
+            }
+        }
+    }
+
     file << "TicketID,BuyerName,Type,Status\n";
     for (int i = 0; i < size; i++) {
-        file << tickets[i].ticketID << "," << tickets[i].buyerName << ","
-             << tickets[i].type << "," << tickets[i].status << "\n";
+        file << tempTickets[i].ticketID << "," << tempTickets[i].buyerName << ","
+             << tempTickets[i].type << "," << tempTickets[i].status << "\n";
     }
     file.close();
+    
+    std::cout << "Ticket data saved to file in ascending order by Ticket ID.\n";
 }
 
 void TicketQueue::loadFromFile() {

@@ -1,5 +1,10 @@
 TicketID,BuyerName,Type,Status
 T002,yh,VIP,Confirmed
 T004,shafs,VIP,Confirmed
+T006,yh,VIP,Confirmed
+T008,yh,VIP,Pending
+T009,shafs,VIP,Pending
 T001,cy,Regular,Confirmed
 T003,elvis,Regular,Confirmed
+T005,cy,Regular,Confirmed
+T007,cy,Regular,Pending
