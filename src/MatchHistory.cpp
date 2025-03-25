@@ -216,8 +216,8 @@ bool isValidFilename(const std::string& filename) {
 
 // Constructor
 MatchHistory::MatchHistory() {
-    // Load player list when MatchHistory is instantiated
-    loadPlayerList("/Users/markchwd/Desktop/DS/tennis-champ/data/player_list.txt");
+    // No additional initialization needed
+    // Player list will be loaded when entering the match history menu
 }
 
 // Add a new match to history
@@ -631,6 +631,13 @@ void runMatchHistorySystem(MatchHistory& history) {
 
     std::cout << "Asia Pacific University Tennis Championship" << std::endl;
     std::cout << "Match History Tracking System" << std::endl;
+    
+    // Load player list when entering the match history system
+    if (loadPlayerList("data/player_list.txt")) {
+        std::cout << "Player list loaded successfully." << std::endl;
+    } else {
+        std::cout << "Warning: Failed to load player list. Player validation may not work correctly." << std::endl;
+    }
 
     while (running) {
         std::cout << "\n===== MATCH HISTORY SYSTEM =====" << std::endl;

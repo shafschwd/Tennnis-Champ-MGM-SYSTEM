@@ -1,11 +1,11 @@
 PlayerID, Name, Status
-P001, Roger Federer, Active
-P002, Rafael Nadal, Active
-P003, Andy Murray, Active
-P004, Novak Djokovic, Withdrawn (Injury)
-P005, Dominic Thiem, Active
-P006, Daniil Medvedev, Withdrawn (Scheduling Conflict)
-P007, Stefanos Tsitsipas, Active
-P008, Alexander Zverev, Withdrawn (Personal Reason)
-P009, Carlos Alcaraz, Active
 P010, Jannik Sinner, Active
+P009, Carlos Alcaraz, Active
+P008, Alexander Zverev, Withdrawn (Personal Reason)
+P007, Stefanos Tsitsipas, Active
+P006, Daniil Medvedev, Withdrawn (Scheduling Conflict)
+P005, Dominic Thiem, Active
+P004, Novak Djokovic, Withdrawn (Injury)
+P003, Andy Murray, Active
+P002, Rafael Nadal, Active
+P001, Roger Federer, Withdrawn (Injury)
