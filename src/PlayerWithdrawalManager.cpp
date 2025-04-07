@@ -1,5 +1,29 @@
-﻿// PlayerWithdrawalManager.cpp
+// PlayerWithdrawalManager.cpp
 #include "../include/PlayerWithdrawalManager.h"
+
+// ===================== Queue Method Definitions =====================
+
+void PlayerQueue::enqueue(TournamentSystem::Player* player) {
+    PlayerQueueNode* newNode = new PlayerQueueNode{ player, nullptr };
+    if (rear) rear->next = newNode;
+    else front = newNode;
+    rear = newNode;
+}
+
+TournamentSystem::Player* PlayerQueue::dequeue() {
+    if (!front) return nullptr;
+    PlayerQueueNode* temp = front;
+    TournamentSystem::Player* player = temp->data;
+    front = front->next;
+    if (!front) rear = nullptr;
+    delete temp;
+    return player;
+}
+
+bool PlayerQueue::isEmpty() const {
+    return front == nullptr;
+}
+
 
 TournamentSystem::Match::Match(std::string mid, std::string r, std::string p1, std::string p2, std::string d, std::string s) {
     matchID = mid;
@@ -70,11 +94,11 @@ void TournamentSystem::updateScheduleFile() {
     Match* current = matchHead;
     while (current) {
         file << current->matchID << ", "
-             << current->round << ", "
-             << current->player1 << ", "
-             << current->player2 << ", "
-             << current->date << ", "
-             << current->status << "\n";
+            << current->round << ", "
+            << current->player1 << ", "
+            << current->player2 << ", "
+            << current->date << ", "
+            << current->status << "\n";
         current = current->next;
     }
     file.close();
@@ -97,9 +121,9 @@ void TournamentSystem::displayPlayersByStatus(const std::string& statusFilter, c
                 fullStatus += " (" + current->withdrawReason + ")";
 
             std::cout << "| " << std::left << std::setw(3) << ++count << " | "
-                      << std::left << std::setw(20) << current->name << "| "
-                      << std::setw(8) << current->id << "| "
-                      << std::setw(30) << fullStatus << "\n";
+                << std::left << std::setw(20) << current->name << "| "
+                << std::setw(8) << current->id << "| "
+                << std::setw(30) << fullStatus << "\n";
         }
         current = current->next;
     }
@@ -273,9 +297,9 @@ void TournamentSystem::searchPlayerByID(const std::string& query, TournamentSyst
     while (current) {
         if (current->id == query) {
             std::cout << "| " << std::setw(3) << ++count << " | "
-                      << std::left << std::setw(17) << current->name << "| "
-                      << std::setw(5) << current->id << " | "
-                      << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
+                << std::left << std::setw(17) << current->name << "| "
+                << std::setw(5) << current->id << " | "
+                << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
         }
         current = current->next;
     }
@@ -300,9 +324,9 @@ void TournamentSystem::searchPlayerByName(const std::string& query, TournamentSy
     while (current) {
         if (toLower(current->name).find(toLower(query)) != std::string::npos) {
             std::cout << "| " << std::setw(3) << ++count << " | "
-                      << std::left << std::setw(17) << current->name << "| "
-                      << std::setw(5) << current->id << " | "
-                      << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
+                << std::left << std::setw(17) << current->name << "| "
+                << std::setw(5) << current->id << " | "
+                << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
         }
         current = current->next;
     }
@@ -321,9 +345,9 @@ void TournamentSystem::searchPlayerByName(const std::string& query, TournamentSy
 
             if (dist <= 2) {
                 std::cout << "| " << std::setw(3) << ++count << " | "
-                          << std::left << std::setw(17) << current->name << "| "
-                          << std::setw(5) << current->id << " | "
-                          << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
+                    << std::left << std::setw(17) << current->name << "| "
+                    << std::setw(5) << current->id << " | "
+                    << std::setw(15) << current->status + (current->status == "Withdrawn" ? " (" + current->withdrawReason + ")" : "") << " |\n";
             }
             current = current->next;
         }
@@ -458,13 +482,13 @@ void TournamentSystem::showMatchesByStatus() {
             } while (option != 1 && option != 2);
         }
 
-        Match** matches = new Match*[count];
+        Match** matches = new Match * [count];
         current = matchHead;
         int i = 0;
         while (current) {
             bool include = (filterChoice == 1) ||
                 (filterChoice == 2 && current->status == "Upcoming") ||
-            (filterChoice == 3 && current->status == "Cancelled") ||
+                (filterChoice == 3 && current->status == "Cancelled") ||
                 (filterChoice == 4 && current->status == "Updated");
             if (include) matches[i++] = current;
             current = current->next;
@@ -607,95 +631,75 @@ void TournamentSystem::showPlayers(int filter) {
 
 void TournamentSystem::addReplacementPlayer() {
     while (true) {
-        std::cout << "\n===== Add Replacement Player =====\n";
+        std::cout << "\n===== Add Replacement Player (Queue Implementation) =====\n";
 
-        int withdrawnCount = 0, activeCount = 0;
+        // Create queue for Withdrawn players
+        PlayerQueue withdrawnQueue;
+        int withdrawnCount = 0;
+
+        // Fill queue
         Player* current = playerHead;
         while (current) {
-            if (current->status == "Withdrawn") withdrawnCount++;
-            else if (current->status == "Active") activeCount++;
+            if (current->status == "Withdrawn") {
+                withdrawnQueue.enqueue(current);
+                withdrawnCount++;
+            }
             current = current->next;
         }
 
-        Player** withdrawn = new Player * [withdrawnCount];
-        Player** active = new Player * [activeCount];
+        if (withdrawnCount == 0) {
+            std::cout << "There are no withdrawn players to process.\n";
+            return;
+        }
+
+        // Build array for active players
+        int activeCount = 0;
         current = playerHead;
-        int wi = 0, ai = 0;
         while (current) {
-            if (current->status == "Withdrawn") withdrawn[wi++] = current;
-            else if (current->status == "Active") active[ai++] = current;
+            if (current->status == "Active") activeCount++;
             current = current->next;
         }
 
-        for (int i = 0; i < withdrawnCount - 1; ++i)
-            for (int j = 0; j < withdrawnCount - i - 1; ++j)
-                if (withdrawn[j]->id > withdrawn[j + 1]->id)
-                    std::swap(withdrawn[j], withdrawn[j + 1]);
+        Player** active = new Player * [activeCount];
+        int ai = 0;
+        current = playerHead;
+        while (current) {
+            if (current->status == "Active") active[ai++] = current;
+            current = current->next;
+        }
 
+        // Sort active array by ID
         for (int i = 0; i < activeCount - 1; ++i)
             for (int j = 0; j < activeCount - i - 1; ++j)
                 if (active[j]->id > active[j + 1]->id)
                     std::swap(active[j], active[j + 1]);
 
-        std::cout << "Withdrawn Players:\n";
-        std::cout << "----------------------------------------------------------------------------\n";
-        std::cout << "| No. | Player Name         | ID       | Status                            |\n";
-        std::cout << "----------------------------------------------------------------------------\n";
-        for (int i = 0; i < withdrawnCount; ++i) {
-            std::string fullStatus = withdrawn[i]->status;
-            if (!withdrawn[i]->withdrawReason.empty())
-                fullStatus += " (" + withdrawn[i]->withdrawReason + ")";
-            std::cout << "| " << std::setw(3) << i + 1 << " | "
-                << std::left << std::setw(20) << withdrawn[i]->name << "| "
-                << std::setw(8) << withdrawn[i]->id << "| "
-                << std::setw(30) << fullStatus << "|\n";
-        }
+        // Process queue
+        while (!withdrawnQueue.isEmpty()) {
+            Player* withdrawnPlayer = withdrawnQueue.dequeue();
 
-        std::cout << "\nActive Players:\n";
-        std::cout << "----------------------------------------------------------------------------\n";
-        std::cout << "| No. | Player Name         | ID       | Status                            |\n";
-        std::cout << "----------------------------------------------------------------------------\n";
-        for (int i = 0; i < activeCount; ++i) {
-            std::cout << "| " << std::setw(3) << i + 1 << " | "
-                << std::left << std::setw(20) << active[i]->name << "| "
-                << std::setw(8) << active[i]->id << "| "
-                << std::setw(30) << active[i]->status << "|\n";
-        }
+            std::cout << "\nWithdrawn Player: " << withdrawnPlayer->name << " (" << withdrawnPlayer->id << ") - Reason: " << withdrawnPlayer->withdrawReason << "\n";
 
-        std::string withdrawnID;
-        Player* withdrawnPlayer = nullptr;
-        while (true) {
-            std::cout << "\nEnter withdrawn Player ID (or 0 to return): ";
-            getline(std::cin, withdrawnID);
-            if (withdrawnID == "0") {
-                delete[] withdrawn;
-                delete[] active;
-                return;
+            std::cout << "\nActive Players:\n";
+            std::cout << "----------------------------------------------------------------------------\n";
+            std::cout << "| No. | Player Name         | ID       | Status                            |\n";
+            std::cout << "----------------------------------------------------------------------------\n";
+            for (int i = 0; i < activeCount; ++i) {
+                std::cout << "| " << std::setw(3) << i + 1 << " | "
+                    << std::left << std::setw(20) << active[i]->name << "| "
+                    << std::setw(8) << active[i]->id << "| "
+                    << std::setw(30) << active[i]->status << "|\n";
             }
 
-            current = playerHead;
-            while (current) {
-                if (current->id == withdrawnID && current->status == "Withdrawn") {
-                    withdrawnPlayer = current;
-                    break;
-                }
-                current = current->next;
-            }
-
-            if (withdrawnPlayer) break;
-            std::cout << "Invalid withdrawn player ID. Please try again.\n";
-        }
-
-        while (true) {
             std::string replacementID;
-            std::cout << "Enter replacement Player ID (or 0 to return): ";
-            getline(std::cin, replacementID);
-            if (replacementID == "0") break;
+            std::cout << "\nEnter replacement Player ID for this withdrawn player (or 0 to skip): ";
+            std::getline(std::cin, replacementID);
+            if (replacementID == "0") continue;
 
             Player* replacement = nullptr;
             current = playerHead;
             while (current) {
-                if (current->id == replacementID) {
+                if (current->id == replacementID && current->status == "Active") {
                     replacement = current;
                     break;
                 }
@@ -703,11 +707,7 @@ void TournamentSystem::addReplacementPlayer() {
             }
 
             if (!replacement) {
-                std::cout << "Invalid replacement player ID.\n";
-                continue;
-            }
-            else if (replacement->status != "Active") {
-                std::cout << "Replacement player must be active.\n";
+                std::cout << "Invalid or inactive replacement player.\n";
                 continue;
             }
 
@@ -734,30 +734,25 @@ void TournamentSystem::addReplacementPlayer() {
 
             if (updated) {
                 updateScheduleFile();
-                std::cout << "Replacement successfully made and schedule updated.\n";
+                std::cout << "Replacement successful for player " << withdrawnPlayer->name << ". Schedule updated.\n";
             }
             else {
-                std::cout << "No matches found to update for the withdrawn player.\n";
+                std::cout << "No matches found to update for this withdrawn player.\n";
             }
-
-            int option;
-            do {
-                std::cout << "\n1. Try another replacement\n2. Return to main menu\nEnter choice: ";
-                std::cin >> option;
-                std::cin.ignore();
-                if (option == 2) {
-                    delete[] withdrawn;
-                    delete[] active;
-                    return;
-                }
-                else if (option != 1) std::cout << "Invalid choice. Try again.\n";
-            } while (option != 1);
         }
 
-        delete[] withdrawn;
         delete[] active;
+
+        int option;
+        std::cout << "\nAll withdrawn players have been processed.\n";
+        std::cout << "1. Return to main menu\n2. Repeat replacement process\nEnter choice: ";
+        std::cin >> option;
+        std::cin.ignore();
+
+        if (option == 1) return;
     }
 }
+
 
 void TournamentSystem::modifyPlayerStatus() {
     while (true) {
