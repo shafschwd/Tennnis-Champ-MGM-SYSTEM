@@ -1,15 +1,103 @@
-// scheduleMatches.cpp - Implementation of tournament scheduling component
 #include "../include/scheduleMatches.hpp"
+#include <cstdlib>
+#include <ctime>
+
+bool equalsIgnoreCase(const std::string& a, const std::string& b) {
+    if (a.length() != b.length()) return false;
+    for (size_t i = 0; i < a.length(); i++) {
+        if (std::tolower(a[i]) != std::tolower(b[i])) return false;
+    }
+    return true;
+}
+
+// WinnerPriorityQueue Implementation
+WinnerPriorityQueue::WinnerPriorityQueue() : size(0) {
+    for (int i = 0; i < MAX_SIZE; i++) heap[i] = nullptr;
+}
+
+WinnerPriorityQueue::~WinnerPriorityQueue() {
+    for (int i = 0; i < size; i++) delete heap[i];
+}
+
+int WinnerPriorityQueue::parent(int index) { return (index - 1) / 2; }
+int WinnerPriorityQueue::leftChild(int index) { return 2 * index + 1; }
+int WinnerPriorityQueue::rightChild(int index) { return 2 * index + 2; }
+
+void WinnerPriorityQueue::swapNodes(int i, int j) {
+    Node* temp = heap[i];
+    heap[i] = heap[j];
+    heap[j] = temp;
+}
+
+void WinnerPriorityQueue::heapifyUp(int index) {
+    while (index > 0) {
+        int p = parent(index);
+        if (heap[p]->wins < heap[index]->wins ||
+            (heap[p]->wins == heap[index]->wins &&
+             heap[p]->player->getTotalPointsScored() < heap[index]->player->getTotalPointsScored())) {
+            swapNodes(index, p);
+            index = p;
+        } else break;
+    }
+}
+
+void WinnerPriorityQueue::heapifyDown(int index) {
+    int maxIndex = index;
+    int left = leftChild(index);
+    int right = rightChild(index);
+
+    if (left < size && (heap[left]->wins > heap[maxIndex]->wins ||
+        (heap[left]->wins == heap[maxIndex]->wins &&
+         heap[left]->player->getTotalPointsScored() > heap[maxIndex]->player->getTotalPointsScored()))) {
+        maxIndex = left;
+    }
+
+    if (right < size && (heap[right]->wins > heap[maxIndex]->wins ||
+        (heap[right]->wins == heap[maxIndex]->wins &&
+         heap[right]->player->getTotalPointsScored() > heap[maxIndex]->player->getTotalPointsScored()))) {
+        maxIndex = right;
+    }
+
+    if (index != maxIndex) {
+        swapNodes(index, maxIndex);
+        heapifyDown(maxIndex);
+    }
+}
+
+bool WinnerPriorityQueue::isEmpty() const { return size == 0; }
+
+void WinnerPriorityQueue::enqueue(Player* player, int wins) {
+    if (size >= MAX_SIZE) return;
+    heap[size] = new Node(player, wins);
+    heapifyUp(size);
+    size++;
+}
+
+Player* WinnerPriorityQueue::dequeue() {
+    if (isEmpty()) return nullptr;
+    Node* result = heap[0];
+    Player* player = result->player;
+
+    heap[0] = heap[size - 1];
+    size--;
+    heap[size] = nullptr;
+
+    if (size > 0) heapifyDown(0);
+    delete result;
+    return player;
+}
+
+int WinnerPriorityQueue::getSize() const { return size; }
+
 
 // Player Implementation
-Player::Player(int id, std::string name, std::string username, std::string password, int rank)
-    : id(id), name(name), username(username), password(password), rank(rank), matchesWon(0), matchesLost(0), totalPointsScored(0) {}
+Player::Player(int id, std::string name, std::string username, std::string password)
+    : id(id), name(name), username(username), password(password), matchesWon(0), matchesLost(0), totalPointsScored(0) {}
 
 int Player::getId() const { return id; }
 std::string Player::getName() const { return name; }
 std::string Player::getUsername() const { return username; }
 std::string Player::getPassword() const { return password; }
-int Player::getRank() const { return rank; }
 int Player::getMatchesWon() const { return matchesWon; }
 int Player::getMatchesLost() const { return matchesLost; }
 int Player::getTotalPointsScored() const { return totalPointsScored; }
@@ -24,7 +112,7 @@ double Player::getWinningPercentage() const {
 }
 
 void Player::display() const {
-    std::cout << "ID: " << id << ", Name: " << name << ", Rank: " << rank
+    std::cout << "ID: " << id << ", Name: " << name
               << ", Wins: " << matchesWon
               << ", Losses: " << matchesLost
               << ", Winning Percentage: " << std::fixed << std::setprecision(2) << getWinningPercentage() << "%\n";
@@ -98,22 +186,17 @@ void displayTournamentMenu() {
     std::cout << " ========== Welcome to the APU Tennis Tournament Management System ==========\n";
     std::cout << "1. Tennis Player Account\n";
     std::cout << "2. Start Match\n";
+    std::cout << "3. Auto-Simulate Full Tournament\n";
     std::cout << "0. Return to Main Menu\n";
     std::cout << "Enter your choice: ";
 }
 
-// Handle start match menu
 void handleStartMatchMenu(TournamentMatch* matches[], int matchCount, TournamentBracket& bracket, int matchChoice, TournamentMatchHistory& history) {
     if (matchChoice < 1 || matchChoice > matchCount) {
-        clearScreen();
-        std::cout << "Invalid match selection.\n";
-        return;
+        clearScreen(); std::cout << "Invalid match selection.\n"; return;
     }
-
     if (matches[matchChoice - 1]->status == "Completed") {
-        clearScreen();
-        std::cout << "This match has already been simulated.\n";
-        return;
+        clearScreen(); std::cout << "This match has already been simulated.\n"; return;
     }
 
     int p1Sets, p2Sets;
@@ -124,21 +207,17 @@ void handleStartMatchMenu(TournamentMatch* matches[], int matchCount, Tournament
         std::cout << "Sets won by " << matches[matchChoice - 1]->player1->getName() << ": ";
         std::cin >> p1Sets;
         while (std::cin.fail() || p1Sets < 0 || p1Sets > 2) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid input. Please enter a number between 0 and 2: ";
             std::cin >> p1Sets;
         }
-
         std::cout << "Sets won by " << matches[matchChoice - 1]->player2->getName() << ": ";
         std::cin >> p2Sets;
         while (std::cin.fail() || p2Sets < 0 || p2Sets > 2) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.clear(); std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid input. Please enter a number between 0 and 2: ";
             std::cin >> p2Sets;
         }
-
         if ((p1Sets == 2 && (p2Sets == 0 || p2Sets == 1)) || (p2Sets == 2 && (p1Sets == 0 || p1Sets == 1))) {
             validScore = true;
         } else {
@@ -150,14 +229,130 @@ void handleStartMatchMenu(TournamentMatch* matches[], int matchCount, Tournament
     matches[matchChoice - 1]->setScore(score);
 
     Player* winner = (p1Sets > p2Sets) ? matches[matchChoice - 1]->player1 : matches[matchChoice - 1]->player2;
-    matches[matchChoice - 1]->setWinner(winner);
+    Player* loser  = (p1Sets > p2Sets) ? matches[matchChoice - 1]->player2 : matches[matchChoice - 1]->player1;
 
-    // Update player stats
+    matches[matchChoice - 1]->setWinner(winner);
+    matches[matchChoice - 1]->status = "Completed";
+
     winner->setMatchesWon(winner->getMatchesWon() + 1);
+    loser->setMatchesLost(loser->getMatchesLost() + 1);
 
     history.addCompletedMatch(matches[matchChoice - 1]);
     std::cout << "Match result saved.\n";
 }
+
+bool stageExists(TournamentMatch* matches[], int matchCount, const std::string& stage) {
+    for (int i = 0; i < matchCount; i++) {
+        if (matches[i]->round == stage) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void handlePostMatchProgression(TournamentMatch* matches[], int& matchCount, int& matchIDCounter, Player* winners[], WinnerPriorityQueue& pq, TournamentMatchHistory& history) {
+    if (areAllMatchesCompleted(matches, matchCount, "Qualifier") && !stageExists(matches, matchCount, "Semifinal")) {
+        int winnerCount = collectWinners(matches, matchCount, "Qualifier", winners, 4, pq);
+        if (winnerCount >= 2) {
+            std::cout << "Collected " << winnerCount << " winners for Qualifier.\n";
+            generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Semifinal");
+        }
+    }
+
+    if (areAllMatchesCompleted(matches, matchCount, "Semifinal") && !stageExists(matches, matchCount, "Final")) {
+        int winnerCount = collectWinners(matches, matchCount, "Semifinal", winners, 2, pq);
+        if (winnerCount >= 2) {
+            std::cout << "Collected " << winnerCount << " winners for Semifinal.\n";
+            generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Final");
+        }
+    }
+
+    if (areAllMatchesCompleted(matches, matchCount, "Final")) {
+        for (int i = 0; i < matchCount; ++i) {
+            if (matches[i]->round == "Final" && matches[i]->winner != nullptr) {
+                std::cout << "\n\U0001F3C6 Tournament Champion: " << matches[i]->winner->getName() << "!\n";
+                break;
+            }
+        }
+    }
+}
+
+
+
+// Auto simulate stage
+void autoSimulateQualifierMatches(TournamentMatch* matches[], int& matchCount, TournamentMatchHistory& history) {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    for (int i = 0; i < matchCount; ++i) {
+        TournamentMatch* match = matches[i];
+        if (match->round != "Qualifier" || match->status == "Completed") continue;
+        int winnerIndex = std::rand() % 2;
+        int p1Sets = winnerIndex == 0 ? 2 : std::rand() % 2;
+        int p2Sets = winnerIndex == 1 ? 2 : std::rand() % 2;
+        std::string score = std::to_string(p1Sets) + "-" + std::to_string(p2Sets);
+        match->setScore(score);
+        Player* winner = (p1Sets > p2Sets) ? match->player1 : match->player2;
+        Player* loser = (p1Sets > p2Sets) ? match->player2 : match->player1;
+        match->setWinner(winner);
+        match->status = "Completed";
+        winner->setMatchesWon(winner->getMatchesWon() + 1);
+        loser->setMatchesLost(loser->getMatchesLost() + 1);
+        history.addCompletedMatch(match);
+    }
+    std::cout << "[Auto Simulation Complete] All Qualifier matches have been played.\n";
+}
+
+void autoSimulateStageMatches(TournamentMatch* matches[], int matchCount, const std::string& stage, TournamentMatchHistory& history) {
+    for (int i = 0; i < matchCount; ++i) {
+        TournamentMatch* match = matches[i];
+        if (match->round != stage || match->status == "Completed") continue;
+        int winnerIndex = std::rand() % 2;
+        int p1Sets = winnerIndex == 0 ? 2 : std::rand() % 2;
+        int p2Sets = winnerIndex == 1 ? 2 : std::rand() % 2;
+        std::string score = std::to_string(p1Sets) + "-" + std::to_string(p2Sets);
+        match->setScore(score);
+        Player* winner = (p1Sets > p2Sets) ? match->player1 : match->player2;
+        Player* loser = (p1Sets > p2Sets) ? match->player2 : match->player1;
+        match->setWinner(winner);
+        match->status = "Completed";
+        winner->setMatchesWon(winner->getMatchesWon() + 1);
+        loser->setMatchesLost(loser->getMatchesLost() + 1);
+        history.addCompletedMatch(match);
+    }
+    std::cout << "[Auto Simulation Complete] " << stage << " matches completed.\n";
+}
+
+void autoSimulateFullTournament(TournamentMatch* matches[], int& matchCount, TournamentMatchHistory& history, int& matchIDCounter, WinnerPriorityQueue& pq) {
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    autoSimulateQualifierMatches(matches, matchCount, history);
+
+    Player* winners[50];
+    int winnerCount = 0;
+    if (areAllMatchesCompleted(matches, matchCount, "Qualifier")) {
+        winnerCount = collectWinners(matches, matchCount, "Qualifier", winners, 4, pq);
+        std::cout << "Collected " << winnerCount << " winners for Qualifier.\n";
+        generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Semifinal");
+    }
+
+    autoSimulateStageMatches(matches, matchCount, "Semifinal", history);
+    if (areAllMatchesCompleted(matches, matchCount, "Semifinal")) {
+        winnerCount = collectWinners(matches, matchCount, "Semifinal", winners, 2, pq);
+        std::cout << "Collected " << winnerCount << " winners for Semifinal.\n";
+        generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Final");
+    }
+
+    autoSimulateStageMatches(matches, matchCount, "Final", history);
+    if (areAllMatchesCompleted(matches, matchCount, "Final")) {
+        for (int i = 0; i < matchCount; ++i) {
+            if (matches[i]->round == "Final" && matches[i]->winner != nullptr) {
+                std::cout << "\U0001F3C6 Tournament Champion: " << matches[i]->winner->getName() << "!\n";
+                break;
+            }
+        }
+    }
+}
+
+
 
 // Handle player menu
 void handlePlayerMenu(Player* players[], int playerCount, std::string& loggedInUsername, TournamentMatch* matches[], int matchCount) {
@@ -319,16 +514,18 @@ void generateKnockoutMatches(Player* winners[], int winnerCount, TournamentMatch
     }
 }
 
+
+
 // Run main menu for tournament scheduling
 void runMainMenu(TournamentMatch** matches, int matchCount, TournamentBracket& bracket, TournamentMatchHistory& history) {
     Player* players[50];
     int playerCount = 6;
-    players[0] = new Player(1, "Low", "p1", "s1", 1);
-    players[1] = new Player(2, "Chun", "p2", "s2", 2);
-    players[2] = new Player(3, "Yian", "p3", "s3", 3);
-    players[3] = new Player(4, "Saw", "p4", "s4", 4);
-    players[4] = new Player(5, "Yu", "p5", "s5", 5);
-    players[5] = new Player(6, "Huang", "p6", "s6", 6);
+    players[0] = new Player(1, "Low", "p1", "s1");
+    players[1] = new Player(2, "Chun", "p2", "s2");
+    players[2] = new Player(3, "Yian", "p3", "s3");
+    players[3] = new Player(4, "Saw", "p4", "s4");
+    players[4] = new Player(5, "Yu", "p5", "s5");
+    players[5] = new Player(6, "Huang", "p6", "s6");
 
     int matchIDCounter = 101;
     generateRoundRobinMatches(players, playerCount, matches, matchCount, 100, matchIDCounter, "Qualifier");
@@ -372,26 +569,12 @@ void runMainMenu(TournamentMatch** matches, int matchCount, TournamentBracket& b
 
                 handleStartMatchMenu(matches, matchCount, bracket, matchChoice, history);
 
-                // Check if all qualifier matches are completed
-                if (areAllMatchesCompleted(matches, matchCount, "Qualifier")) {
-                    winnerCount = collectWinners(matches, matchCount, "Qualifier", winners, 4, pq);
-                    std::cout << "Collected " << winnerCount << " winners for Qualifier.\n";
-                    generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Semifinal");
-                }
-
-                // Check if all semifinal matches are completed
-                if (areAllMatchesCompleted(matches, matchCount, "Semifinal")) {
-                    winnerCount = collectWinners(matches, matchCount, "Semifinal", winners, 2, pq);
-                    std::cout << "Collected " << winnerCount << " winners for Semifinal.\n";
-                    generateKnockoutMatches(winners, winnerCount, matches, matchCount, 100, matchIDCounter, "Final");
-                }
-
-                // Check if the final match is completed
-                if (areAllMatchesCompleted(matches, matchCount, "Final")) {
-                    std::cout << "Tournament Champion: " << matches[matchCount - 1]->winner->getName() << "!\n";
-                }
+                handlePostMatchProgression(matches, matchCount, matchIDCounter, winners, pq, history);
                 break;
             }
+            case 3:
+                autoSimulateFullTournament(matches, matchCount, history, matchIDCounter, pq);
+            break;
             case 0:
                 std::cout << "Returning to main menu...\n";
                 break;
@@ -399,9 +582,6 @@ void runMainMenu(TournamentMatch** matches, int matchCount, TournamentBracket& b
                 std::cout << "Invalid choice.\n";
         }
 
-        std::cout << "\nPress any key to proceed";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cin.get();
     } while (choice != 0);
 
     // Cleanup
