@@ -56,7 +56,32 @@ public:
     void showPlayers(int filter);
     void addReplacementPlayer();
     void modifyPlayerStatus();
+
+    // Grant access to queue classes
+    friend struct PlayerQueueNode;
+    friend class PlayerQueue;
 };
+
+// ============ Queue Implementation ============
+
+struct PlayerQueueNode {
+    TournamentSystem::Player* data;
+    PlayerQueueNode* next;
+};
+
+class PlayerQueue {
+private:
+    PlayerQueueNode* front;
+    PlayerQueueNode* rear;
+public:
+    PlayerQueue() : front(nullptr), rear(nullptr) {}
+
+    void enqueue(TournamentSystem::Player* player);
+    TournamentSystem::Player* dequeue();
+    bool isEmpty() const;
+};
+
+// ==============================================
 
 void runPlayerWithdrawalSystem();
 
